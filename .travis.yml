@@ -4,7 +4,13 @@ go:
 - 1.14.x
 
 notifications:
-  email: true
+  notifications:
+    slack: faustohome:TvUTqJfV83X7XRh0yybQMWlk
+  email:
+    recipients:
+      - faustoespinal@gmail.com
+    on_success: always # default: change
+    on_failure: always # default: always
 
 env:
   - CHANGE_MINIKUBE_NONE_USER=true
