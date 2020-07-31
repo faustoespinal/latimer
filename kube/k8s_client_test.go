@@ -7,6 +7,10 @@ import (
 	"time"
 )
 
+const (
+	NAMESPACE = "test-ns"
+)
+
 func getDefaultKubeConfigPath() string {
 	user, err := user.Current()
 	if err != nil {
@@ -16,55 +20,38 @@ func getDefaultKubeConfigPath() string {
 	return defaultKubeConfigPath
 }
 
-func Test_GetNamespace(t *testing.T) {
-	k8s, err := NewK8sClient(getDefaultKubeConfigPath())
-	if err != nil {
-		panic(err)
-	}
-
-	namespace := "paas"
-	t.Run("success", func(t *testing.T) {
-		ns := k8s.GetNamespace(namespace)
-		if ns != nil {
-			t.Logf("Namespace %v found: %v\n", namespace, *ns)
-		} else {
-			t.Errorf("Expecting a namespace called %v\n", namespace)
-		}
-	})
-}
-
 func Test_CreateDeleteNamespace(t *testing.T) {
 	k8s, err := NewK8sClient(getDefaultKubeConfigPath())
 	if err != nil {
 		panic(err)
 	}
 
-	namespace := "test-ns"
-	t.Run("create-ns", func(t *testing.T) {
-		ns, err := k8s.CreateNamespace(namespace)
+	t.Run("create-namespace", func(t *testing.T) {
+		ns, err := k8s.CreateNamespace(NAMESPACE)
 		if err != nil {
-			t.Errorf("Error creating namespace called %v\n", namespace)
+			t.Errorf("Error creating namespace called %v\n", NAMESPACE)
 		} else {
-			t.Logf("Namespace %v created: %v\n", namespace, *ns)
+			t.Logf("Namespace %v created: %v\n", NAMESPACE, *ns)
 		}
 	})
-	t.Run("delete-ns", func(t *testing.T) {
-		err := k8s.DeleteNamespace(namespace)
-		if err != nil {
-			t.Errorf("Error deleting namespace called %v\n", namespace)
+	time.Sleep(1000 * time.Millisecond)
+	t.Run("namespace-exists", func(t *testing.T) {
+		ns := k8s.GetNamespace(NAMESPACE)
+		if ns != nil {
+			t.Logf("Namespace %v found: %v\n", NAMESPACE, *ns)
 		} else {
-			t.Logf("Namespace %v deleted\n", namespace)
+			t.Errorf("Expecting a namespace called %v\n", NAMESPACE)
 		}
 	})
-	// time.Sleep(2000 * time.Millisecond)
-	// t.Run("check-no-ns", func(t *testing.T) {
-	// 	ns := k8s.GetNamespace(namespace)
-	// 	if ns == nil {
-	// 		t.Logf("Namespace %v not found\n", namespace)
-	// 	} else {
-	// 		t.Errorf("Namespace %v still exists and should not be: %v\n", namespace, *ns)
-	// 	}
-	// })
+	time.Sleep(1000 * time.Millisecond)
+	t.Run("delete-namespace", func(t *testing.T) {
+		err := k8s.DeleteNamespace(NAMESPACE)
+		if err != nil {
+			t.Errorf("Error deleting namespace called %v\n", NAMESPACE)
+		} else {
+			t.Logf("Namespace %v deleted\n", NAMESPACE)
+		}
+	})
 }
 
 func Test_GetResourcesInRelease(t *testing.T) {

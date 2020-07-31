@@ -1,6 +1,8 @@
 package helm
 
 import (
+	"io/ioutil"
+	"os"
 	"testing"
 )
 
@@ -12,8 +14,15 @@ func Test_helm_pull(t *testing.T) {
 	t.Run("helm-pull-remote", func(t *testing.T) {
 		t.Logf("Testing helm pull from remote registry")
 
+		tmpDir, err := ioutil.TempDir(os.TempDir(), "helm-*")
+		if err != nil {
+			t.Errorf("Error creating temp directory %v %v", err.Error(), tmpDir)
+			panic(err.Error())
+		}
+		defer os.RemoveAll(tmpDir)
+
 		helmClient := NewHelmClient()
-		outPath, err := helmClient.Pull(ChartRef, "/tmp")
+		outPath, err := helmClient.Pull(ChartRef, tmpDir)
 		if err != nil {
 			panic(err.Error())
 		}
@@ -28,11 +37,11 @@ func Test_helm_install(t *testing.T) {
 		helmClient := NewHelmClient()
 		releaseName := "test-mem"
 		namespace := "paas"
-		err := helmClient.Install(releaseName, namespace, ChartRef)
+		release, err := helmClient.Install(releaseName, namespace, ChartRef)
 		if err != nil {
 			panic(err.Error())
 		}
-		t.Logf("Installed helm chart [%v] to namespace: %v\n", ChartRef, namespace)
+		t.Logf("Installed helm chart [%v] to namespace: %v\n", release.Name, release.Namespace)
 	})
 }
 
