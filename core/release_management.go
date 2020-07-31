@@ -17,7 +17,7 @@ func WaitForRelease(sc *SystemContext, installable Installable, timeout time.Dur
 		if elapsed > timeout {
 			return false
 		}
-		logrus.Debugf("       Waiting for release %v Elapsed=%v\n", installable.GetID, elapsed)
+		logrus.Debugf("       Waiting for release %v Elapsed=%v\n", installable.GetID(), elapsed)
 	}
 	return true
 }
