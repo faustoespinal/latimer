@@ -4,8 +4,11 @@ go:
 - 1.14.x
 
 notifications:
-  notifications:
-    slack: faustohome:R86pQ3z5xcI25gNrLIjxLpcO#latimer
+  slack: 
+    rooms:
+      - faustohome:R86pQ3z5xcI25gNrLIjxLpcO#latimer
+    on_success: always # default: always
+    on_failure: always # default: always
   email:
     recipients:
       - faustoespinal@gmail.com
