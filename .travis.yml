@@ -5,7 +5,7 @@ go:
 
 notifications:
   notifications:
-    slack: faustohome:TvUTqJfV83X7XRh0yybQMWlk
+    slack: faustohome:R86pQ3z5xcI25gNrLIjxLpcO#latimer
   email:
     recipients:
       - faustoespinal@gmail.com
