@@ -11,23 +11,17 @@ import (
 
 // Package class describing collection of packages and charts to be installed
 type Package struct {
-	Name         string             `json:"name"`
-	Installables []core.Installable `json:"charts"`
+	Name   string `json:"name"`
+	Charts []*helm.Chart
 }
 
 // NewPackage creates a package object
-func NewPackage(pd *core.PackageDescriptor, chartRef string) *Package {
+func NewPackage(pd *core.PackageDescriptor, charts []helm.Chart) *Package {
 	p := new(Package)
 	p.Name = pd.Name
-	p.Installables = make([]core.Installable, 0)
-	for _, item := range pd.Charts {
-		switch item.Kind {
-		case core.ChartType:
-			hc := helm.NewChart(item.Name, chartRef)
-			p.Installables = append(p.Installables, hc)
-		case core.PackageType:
-		case core.ManifestType:
-		}
+	p.Charts = make([]*helm.Chart, 0)
+	for _, item := range charts {
+		p.Charts = append(p.Charts, item)
 	}
 	return p
 }
@@ -52,7 +46,7 @@ func (p *Package) StringYaml() string {
 
 // Install the contents of the installable
 func (p *Package) Install(sc *core.SystemContext) bool {
-	for _, swItem := range p.Installables {
+	for _, swItem := range p.Charts {
 		swItem.Install(sc)
 	}
 	return true
@@ -60,7 +54,7 @@ func (p *Package) Install(sc *core.SystemContext) bool {
 
 // Uninstall the contents of this installable
 func (p *Package) Uninstall(sc *core.SystemContext) bool {
-	for _, swItem := range p.Installables {
+	for _, swItem := range p.Charts {
 		swItem.Uninstall(sc)
 	}
 	return true

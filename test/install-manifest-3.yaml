@@ -1,0 +1,40 @@
+# Sample manifest with 3 charts (with 2 in a package called databases): bitnami/redis, stable/mysql, stable/traefik
+#     [stable/traefik] --> {} databases: [bitnami/redis, stable/mysql] }
+
+metadata:
+  name: install-manifest-2
+  kind: manifest
+charts:
+  - name: "redis"
+    chartName: "bitnami/redis"
+    namespace: "paas"
+    chartLocator: "{{.ChartLocation}}/redis-10.7.9.tgz"
+    releaseName: "test-redis"
+    values:
+      - url: "{{.ChartLocation}}/redis/values.yaml"
+  - name: "mysql"
+    chartName: "stable/mysql"
+    namespace: "paas"
+    chartLocator: "stable/mysql"
+    releaseName: "test-mysql"
+    values:
+      - url: "{{.ChartLocation}}/mysql/values.yaml"
+  - name: "traefik"
+    chartName: "stable/traefik"
+    namespace: "paas"
+    chartLocator: "stable/traefik"
+    releaseName: "test-traefik"
+    values:
+      - url: "{{.ChartLocation}}/traefik/values.yaml"
+packages:
+  - name: "databases"
+    charts:
+      - name: "redis"
+        kind: chart
+      - name: "mysql"
+        kind: chart
+dependencies:
+  - name: "traefik"
+    requires:
+      - name: "databases"
+        kind: package

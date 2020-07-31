@@ -6,7 +6,6 @@ import (
 	"latimer/core"
 	"latimer/helm"
 	"log"
-	"net/url"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -23,7 +22,7 @@ type Manifest struct {
 	// The descriptor of the manifest
 	Descriptor *core.ManifestDescriptor
 
-	charts       map[string]*core.ChartDescriptor
+	charts       map[string]*helm.Chart
 	packages     map[string]*core.PackageDescriptor
 	dependencies map[string][]core.InstallableItem
 }
@@ -37,7 +36,7 @@ func NewManifest(manifestArgs core.ManifestInput) (*Manifest, error) {
 		return nil, err
 	}
 	m.Descriptor = descriptor
-	m.charts = map[string]*core.ChartDescriptor{}
+	m.charts = map[string]*helm.Chart{}
 	m.packages = map[string]*core.PackageDescriptor{}
 	m.dependencies = map[string][]core.InstallableItem{}
 
@@ -45,7 +44,7 @@ func NewManifest(manifestArgs core.ManifestInput) (*Manifest, error) {
 	// Index the charts by name into a map
 	manifestDeps := make([]core.InstallableItem, 0)
 	for idx, c := range descriptor.Charts {
-		m.charts[c.Name] = &(descriptor.Charts[idx])
+		m.charts[c.Name] = helm.NewChart(&(descriptor.Charts[idx]))
 		manifestDeps = append(manifestDeps, core.InstallableItem{
 			Name: c.Name,
 			Kind: core.ChartType,
@@ -105,8 +104,8 @@ func (m *Manifest) Install(sc *core.SystemContext) bool {
 		sysCtxt := *sc
 		switch installItem.Kind {
 		case core.ChartType:
-			c := m.charts[installItem.Name]
-			hc := helm.NewChart(c.Name, c.ChartLocator)
+			hc := m.charts[installItem.Name]
+			c := hc.Descriptor
 			// Clone the system context and override values.
 			sysCtxt.DeploymentSpace = c.Namespace
 			sysCtxt.ReleaseName = c.ReleaseName
@@ -142,13 +141,8 @@ func (m *Manifest) Uninstall(sc *core.SystemContext) bool {
 		logrus.Infof("%% name=%v type=%v\n", installItem.Name, installItem.Kind)
 		switch installItem.Kind {
 		case core.ChartType:
-			c := m.charts[installItem.Name]
-			urlRef, err := url.Parse(c.ChartLocator)
-			if err != nil {
-				panic(err)
-			}
-			filePath := urlRef.RequestURI()
-			hc := helm.NewChart(c.Name, filePath)
+			hc := m.charts[installItem.Name]
+			c := hc.Descriptor
 			// Clone the system context and override values.
 			sysCtxt := *sc
 			sysCtxt.DeploymentSpace = c.Namespace

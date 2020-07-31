@@ -15,13 +15,16 @@ type Chart struct {
 
 	// ChartRef is the locator for the chart (eg chart repository or local file system)
 	ChartRef string `json:"chartRef"`
+
+	Descriptor *core.ChartDescriptor `json:"descriptor"`
 }
 
 // NewChart creates a new instance of a helm chart
-func NewChart(name string, chartRef string) *Chart {
+func NewChart(chartDescriptor *core.ChartDescriptor) *Chart {
 	hc := new(Chart)
-	hc.Name = name
-	hc.ChartRef = chartRef
+	hc.Name = chartDescriptor.Name
+	hc.ChartRef = chartDescriptor.ChartLocator
+	hc.Descriptor = chartDescriptor
 	return hc
 }
 
