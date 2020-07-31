@@ -127,7 +127,7 @@ func (m *Manifest) Install(sc *core.SystemContext) bool {
 		case core.PackageType:
 			p := m.packages[installItem.Name]
 			fmt.Printf("    Installing package: %v\n", p.Name)
-			//pkg := pkg.NewPackage(p, chartRef)
+			p.Install(&sysCtxt)
 			logrus.Infof("@@@@@ Package %v\n", p.Name)
 		case core.ManifestType:
 			logrus.Infof("Installed manifest %v\n", installItem.Name)
@@ -149,19 +149,20 @@ func (m *Manifest) Uninstall(sc *core.SystemContext) bool {
 	for idx := len(installList) - 1; idx >= 0; idx-- {
 		installItem := installList[idx]
 		logrus.Infof("%% name=%v type=%v\n", installItem.Name, installItem.Kind)
+		sysCtxt := *sc
 		switch installItem.Kind {
 		case core.ChartType:
 			hc := m.charts[installItem.Name]
 			c := hc.Descriptor
 			// Clone the system context and override values.
-			sysCtxt := *sc
 			sysCtxt.DeploymentSpace = c.Namespace
 			sysCtxt.ReleaseName = c.ReleaseName
 			hc.Uninstall(&sysCtxt)
 			logrus.Infof("Uninstalled HELM chart %v\n", sysCtxt.ReleaseName)
 		case core.PackageType:
 			p := m.packages[installItem.Name]
-			logrus.Infof("@@@@@ Package %v\n", p.Name)
+			p.Uninstall(&sysCtxt)
+			logrus.Infof("Uninstalled Package %v\n", p.Name)
 		case core.ManifestType:
 			logrus.Infof("Installed manifest %v\n", installItem.Name)
 		}
@@ -172,6 +173,15 @@ func (m *Manifest) Uninstall(sc *core.SystemContext) bool {
 
 // Status returns the status of the  installation
 func (m *Manifest) Status(sc *core.SystemContext) kube.InstallStatus {
+	for _, swItem := range m.charts {
+		chartSC := *sc
+		chartSC.DeploymentSpace = swItem.Descriptor.Namespace
+		chartSC.ReleaseName = swItem.Descriptor.ReleaseName
+		status := swItem.Status(&chartSC)
+		if status != kube.Ready {
+			return kube.NotReady
+		}
+	}
 	return kube.Ready
 }
 

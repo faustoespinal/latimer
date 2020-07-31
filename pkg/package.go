@@ -49,18 +49,22 @@ func (p *Package) StringYaml() string {
 
 // Install the contents of the installable
 func (p *Package) Install(sc *core.SystemContext) bool {
+	finalStatus := true
 	for _, swItem := range p.Charts {
-		swItem.Install(sc)
+		status := swItem.Install(sc)
+		finalStatus = finalStatus && status
 	}
-	return true
+	return finalStatus
 }
 
 // Uninstall the contents of this installable
 func (p *Package) Uninstall(sc *core.SystemContext) bool {
+	finalStatus := true
 	for _, swItem := range p.Charts {
-		swItem.Uninstall(sc)
+		status := swItem.Uninstall(sc)
+		finalStatus = finalStatus && status
 	}
-	return true
+	return finalStatus
 }
 
 // Status returns the status of the installation
