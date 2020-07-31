@@ -134,7 +134,7 @@ func (k8s *K8sClient) GetResourcesInRelease(releaseName string, namespace string
 func (k8s *K8sClient) WaitForRelease(releaseName string, namespace string, timeout time.Duration) bool {
 	start := time.Now()
 	rr := k8s.GetResourcesInRelease(releaseName, namespace)
-	for !rr.IsReleaseInstalled() {
+	for rr.ReleaseStatus() != Ready {
 		time.Sleep(2 * time.Second)
 		end := time.Now()
 		elapsed := end.Sub(start)

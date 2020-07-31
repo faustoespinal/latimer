@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"latimer/core"
 	"latimer/helm"
+	"latimer/kube"
+	"latimer/pkg"
 	"log"
 	"time"
 
@@ -23,7 +25,7 @@ type Manifest struct {
 	Descriptor *core.ManifestDescriptor
 
 	charts       map[string]*helm.Chart
-	packages     map[string]*core.PackageDescriptor
+	packages     map[string]*pkg.Package
 	dependencies map[string][]core.InstallableItem
 }
 
@@ -37,7 +39,7 @@ func NewManifest(manifestArgs core.ManifestInput) (*Manifest, error) {
 	}
 	m.Descriptor = descriptor
 	m.charts = map[string]*helm.Chart{}
-	m.packages = map[string]*core.PackageDescriptor{}
+	m.packages = map[string]*pkg.Package{}
 	m.dependencies = map[string][]core.InstallableItem{}
 
 	manifestID := m.GetID()
@@ -52,7 +54,15 @@ func NewManifest(manifestArgs core.ManifestInput) (*Manifest, error) {
 	}
 	// Index the packages by name into a map
 	for _, p := range descriptor.Packages {
-		m.packages[p.Name] = &p
+		charts := make([]*helm.Chart, 0)
+		for _, pkgChart := range p.Charts {
+			name := pkgChart.Name
+			helmChart, found := m.charts[name]
+			if found {
+				charts = append(charts, helmChart)
+			}
+		}
+		m.packages[p.Name] = pkg.NewPackage(&p, charts)
 		manifestDeps = append(manifestDeps, core.InstallableItem{
 			Name: p.Name,
 			Kind: core.PackageType,
@@ -161,8 +171,8 @@ func (m *Manifest) Uninstall(sc *core.SystemContext) bool {
 }
 
 // Status returns the status of the  installation
-func (m *Manifest) Status() core.InstallStatus {
-	return core.Ready
+func (m *Manifest) Status(sc *core.SystemContext) kube.InstallStatus {
+	return kube.Ready
 }
 
 // Creates an ordered list of installation items reflecting the installation order given dependencies

@@ -6,6 +6,18 @@ import (
 	jobsv1 "k8s.io/api/batch/v1"
 )
 
+// InstallStatus models the different status codes for an installable
+type InstallStatus int
+
+const (
+	// NotReady means the Installable is in process of installation/uninstallation but not ready
+	NotReady InstallStatus = iota
+	// Ready means Installable is fully installed and operational
+	Ready
+	// NotInstalled means that nothing has been installed for the installable (no resource artifacts exist)
+	NotInstalled
+)
+
 // ReleaseResources collects core resources under a release
 type ReleaseResources struct {
 	// The name of the release
@@ -29,30 +41,39 @@ func NewReleaseResources(releaseName string) *ReleaseResources {
 	return relResources
 }
 
-// IsReleaseInstalled indicates whether the state of the release ready or not
-func (rr *ReleaseResources) IsReleaseInstalled() bool {
+// ReleaseStatus indicates whether the state of the release ready or not
+func (rr *ReleaseResources) ReleaseStatus() InstallStatus {
+	totalResources := 0
 	for _, depl := range rr.Deployments {
+		totalResources++
 		logrus.Debugf("           DEPL: name=%v readyReplicas=%v replicas=%v\n", depl.Name, depl.Status.ReadyReplicas, *depl.Spec.Replicas)
 		if depl.Status.ReadyReplicas < *depl.Spec.Replicas {
-			return false
+			return NotReady
 		}
 	}
 	for _, ss := range rr.StatefulSets {
+		totalResources++
 		logrus.Debugf("           SS  : name=%v readyReplicas=%v replicas=%v\n", ss.Name, ss.Status.ReadyReplicas, *ss.Spec.Replicas)
 		if ss.Status.ReadyReplicas < *ss.Spec.Replicas {
-			return false
+			return NotReady
 		}
 	}
 	for _, dd := range rr.DaemonSets {
+		totalResources++
 		if dd.Status.NumberUnavailable > 0 {
-			return false
+			return NotReady
 		}
 	}
 	for _, job := range rr.Jobs {
+		totalResources++
 		logrus.Debugf("           JOB : name=%v NumSucceeded=%v Completions=%v\n", job.Name, job.Status.Succeeded, *job.Spec.Completions)
 		if job.Status.Succeeded < *job.Spec.Completions {
-			return false
+			return NotReady
 		}
 	}
-	return true
+	// If there are no runtime resources associated to the release, then it is not installed
+	if totalResources == 0 {
+		return NotInstalled
+	}
+	return Ready
 }

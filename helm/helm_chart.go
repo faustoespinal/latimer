@@ -3,6 +3,7 @@ package helm
 import (
 	"encoding/json"
 	"latimer/core"
+	"latimer/kube"
 
 	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
@@ -85,6 +86,10 @@ func (hc *Chart) Uninstall(sc *core.SystemContext) bool {
 }
 
 // Status returns the status of the  installation
-func (hc *Chart) Status() core.InstallStatus {
-	return core.Ready
+func (hc *Chart) Status(sc *core.SystemContext) kube.InstallStatus {
+	k8s := sc.Context.KubeClient
+	namespace := sc.DeploymentSpace
+	releaseName := sc.ReleaseName
+	rr := k8s.GetResourcesInRelease(releaseName, namespace)
+	return rr.ReleaseStatus()
 }

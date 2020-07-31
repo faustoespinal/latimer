@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"latimer/core"
 	"latimer/helm"
+	"latimer/kube"
 
 	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
@@ -11,14 +12,16 @@ import (
 
 // Package class describing collection of packages and charts to be installed
 type Package struct {
-	Name   string `json:"name"`
-	Charts []*helm.Chart
+	Name       string                  `json:"name"`
+	Descriptor *core.PackageDescriptor `json:"descriptor"`
+	Charts     []*helm.Chart
 }
 
 // NewPackage creates a package object
 func NewPackage(pd *core.PackageDescriptor, charts []*helm.Chart) *Package {
 	p := new(Package)
 	p.Name = pd.Name
+	p.Descriptor = pd
 	p.Charts = make([]*helm.Chart, 0)
 	for _, item := range charts {
 		p.Charts = append(p.Charts, item)
@@ -60,9 +63,20 @@ func (p *Package) Uninstall(sc *core.SystemContext) bool {
 	return true
 }
 
-// Status returns the status of the  installation
-func (p *Package) Status() core.InstallStatus {
-	return core.Ready
+// Status returns the status of the installation
+func (p *Package) Status(sc *core.SystemContext) kube.InstallStatus {
+	packageStatus := kube.Ready
+	for _, swItem := range p.Charts {
+		chartSC := *sc
+		chartSC.DeploymentSpace = swItem.Descriptor.Namespace
+		chartSC.ReleaseName = swItem.Descriptor.ReleaseName
+		status := swItem.Status(&chartSC)
+		if status != kube.Ready {
+			packageStatus = kube.NotReady
+			break
+		}
+	}
+	return packageStatus
 }
 
 // GetID returns the identifier name for this Installable.
