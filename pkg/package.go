@@ -16,7 +16,7 @@ type Package struct {
 }
 
 // NewPackage creates a package object
-func NewPackage(pd *core.PackageDescriptor, charts []helm.Chart) *Package {
+func NewPackage(pd *core.PackageDescriptor, charts []*helm.Chart) *Package {
 	p := new(Package)
 	p.Name = pd.Name
 	p.Charts = make([]*helm.Chart, 0)
