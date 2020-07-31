@@ -27,4 +27,5 @@ before_script:
   - kubectl create ns paas
   - kubectl get ns
   - kubectl get nodes
-  - sleep 2
+  - helm install test-mysql --namespace paas stable/mysql
+  - sleep 3
