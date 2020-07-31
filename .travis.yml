@@ -24,3 +24,7 @@ before_script:
   - sudo minikube start --vm-driver=none --kubernetes-version=v1.17.0
   - minikube update-context
   - sleep 5
+  - kubectl create ns paas
+  - kubectl get ns
+  - kubectl get nodes
+  - sleep 2
