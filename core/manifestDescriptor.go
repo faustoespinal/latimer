@@ -19,14 +19,6 @@ const (
 	ManifestType = "manifest"
 )
 
-// ManifestInput models the fixed template inputs
-type ManifestInput struct {
-	// FilePath is the path of the manifest yaml file
-	FilePath string
-	// ChartLocation is the root locator where the helm charts are located (e.g. file path or network URL)
-	ChartLocation string
-}
-
 // ChartDescriptor describes a chart
 type ChartDescriptor struct {
 	Name         string `json:"name"`
@@ -58,17 +50,17 @@ type ManifestDescriptor struct {
 }
 
 // LoadManifestDescriptor creates a new manifest descriptor object from file contents
-func LoadManifestDescriptor(manifestArgs ManifestInput) (*ManifestDescriptor, error) {
+func LoadManifestDescriptor(filePath string, values map[string]string) (*ManifestDescriptor, error) {
 	m := new(ManifestDescriptor)
 
-	logrus.Infof("Templating manifest file with args: [%v]", manifestArgs)
-	tpl, err := template.ParseFiles(manifestArgs.FilePath)
+	logrus.Infof("Templating manifest file with args: [%v]", values)
+	tpl, err := template.ParseFiles(filePath)
 	if err != nil {
 		log.Fatalln(err)
 	}
 	var b bytes.Buffer // A Buffer needs no initialization.
 	wr := bufio.NewWriter(&b)
-	tpl.Execute(wr, manifestArgs)
+	tpl.Execute(wr, values)
 	wr.Flush()
 
 	yamlBytes := b.Bytes()

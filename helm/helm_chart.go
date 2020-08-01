@@ -61,7 +61,7 @@ func (hc *Chart) Install(sc *core.SystemContext) bool {
 	releaseInfo, err := helmClient.Install(releaseName, releaseNamespace, hc.ChartRef)
 	status := true
 	if releaseInfo != nil && err != nil {
-		logrus.Errorf("Helm chart %v is already installed in the namespace %v", releaseName, releaseNamespace)
+		logrus.Warningf("Helm chart %v is already installed in the namespace %v", releaseName, releaseNamespace)
 		status = false
 	} else if err != nil {
 		logrus.Errorf("Install failed [%v]\n", err.Error())

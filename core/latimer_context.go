@@ -5,6 +5,7 @@ import (
 	"latimer/kube"
 	"log"
 	"os"
+	"strings"
 
 	"github.com/sirupsen/logrus"
 )
@@ -15,7 +16,7 @@ type LatimerContext struct {
 	ManifestPath   string
 	KubeClient     *kube.K8sClient
 	LatimerTempDir string
-	ChartRegistry  string
+	Values         map[string]string
 }
 
 var lc *LatimerContext = nil
@@ -25,15 +26,27 @@ func GetLatimerContext() *LatimerContext {
 	if lc == nil {
 		logrus.Debugf("Creating LatimerContext\n")
 		lc = new(LatimerContext)
+		lc.Values = map[string]string{}
 	}
 	return lc
 }
 
 // InitLatimer loads the kube config settings and initialize basic settings
-func (latimerContext *LatimerContext) InitLatimer(kubeConfigPath string, manifestPath string, chartRegistry string) {
+func (latimerContext *LatimerContext) InitLatimer(kubeConfigPath string, manifestPath string, values []string) {
 	var err error
 	latimerContext.KubeConfigPath = kubeConfigPath
-	latimerContext.ChartRegistry = chartRegistry
+	for _, valueItem := range values {
+		keyvals := strings.Split(valueItem, ",")
+		for _, keyvalItem := range keyvals {
+			keyval := strings.Split(keyvalItem, "=")
+			if len(keyval) >= 2 {
+				key := strings.TrimSpace(keyval[0])
+				value := strings.TrimSpace(keyval[1])
+				latimerContext.Values[key] = value
+			}
+		}
+	}
+	logrus.Infof("LATIMER VALUES=[%v]", latimerContext.Values)
 	latimerContext.KubeClient, err = kube.NewK8sClient(kubeConfigPath)
 	if err != nil {
 		panic(err.Error())
@@ -44,5 +57,5 @@ func (latimerContext *LatimerContext) InitLatimer(kubeConfigPath string, manifes
 		log.Fatal(err)
 	}
 	latimerContext.LatimerTempDir = tmpDir
-	logrus.Infof("INITIALIZED LATIMER CONTEXT kubeConfig=%v chartRegistry=%v", latimerContext.KubeConfigPath, latimerContext.ChartRegistry)
+	logrus.Infof("INITIALIZED LATIMER CONTEXT kubeConfig=%v", latimerContext.KubeConfigPath)
 }

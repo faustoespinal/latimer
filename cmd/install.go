@@ -47,11 +47,7 @@ charts:
 	Run: func(cmd *cobra.Command, args []string) {
 		latimerContext := core.GetLatimerContext()
 		logrus.Infof("Install %v\n", latimerContext.ManifestPath)
-		mi := core.ManifestInput{
-			FilePath:      latimerContext.ManifestPath,
-			ChartLocation: latimerContext.ChartRegistry,
-		}
-		manifest, err := manifest.NewManifest(mi)
+		manifest, err := manifest.NewManifest(latimerContext.ManifestPath, latimerContext.Values)
 		if err != nil {
 			panic(err)
 		}

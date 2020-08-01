@@ -34,7 +34,7 @@ import (
 var cfgFile string
 var kubeConfigPath string
 var manifestPath string
-var chartRegistry string
+var valuesLatimer []string = []string{}
 
 //The verbose flag value
 var verbosity string
@@ -80,7 +80,6 @@ func init() {
 		panic(err)
 	}
 	defaultKubeConfigPath := filepath.Join(user.HomeDir, ".kube", "config")
-	defaultChartRegistry := filepath.Join("file://", user.HomeDir, "charts")
 	// Here you will define your flags and configuration settings.
 	// Cobra supports persistent flags, which, if defined here,
 	// will be global for your application.
@@ -88,13 +87,13 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.latimer.yaml)")
 	rootCmd.PersistentFlags().StringVar(&kubeConfigPath, "kubeconfig", defaultKubeConfigPath, "kubeconfig file (default is $HOME/.kube/config)")
 	rootCmd.PersistentFlags().StringVar(&manifestPath, "manifest", "default", "Path of the input manifest")
-	rootCmd.PersistentFlags().StringVar(&chartRegistry, "chart-registry", defaultChartRegistry, "Chart registry specifier. Default is directory charts in homedir")
 	//Default value is the warn level
 	rootCmd.PersistentFlags().StringVarP(&verbosity, "verbosity", "v", logrus.WarnLevel.String(), "Log level (debug, info, warn, error, fatal, panic")
+	rootCmd.PersistentFlags().StringArrayVar(&valuesLatimer, "set", []string{}, "set values on the command line (can specify multiple or separate values with commas: key1=val1,key2=val2)")
 
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
-	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	//rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
 
 // initConfig reads in config file and ENV variables if set.
@@ -126,7 +125,7 @@ func initConfig() {
 // Load the kube config settings
 func initLatimer() {
 	latimerContext := core.GetLatimerContext()
-	latimerContext.InitLatimer(kubeConfigPath, manifestPath, chartRegistry)
+	latimerContext.InitLatimer(kubeConfigPath, manifestPath, valuesLatimer)
 }
 
 //setUpLogs set the log output ans the log level

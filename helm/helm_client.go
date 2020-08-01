@@ -65,7 +65,7 @@ func (hc *HelmClient) Install(releaseName string, namespace string, chartRef str
 	releaseInfo, err := hc.Status(releaseName, namespace)
 	if releaseInfo != nil && err == nil {
 		//return releaseInfo, fmt.Errorf("Release %v exists in namespace %v", releaseName, namespace)
-		logrus.Infof("Release name %v exists in namespace %v, will upgrade", releaseName, namespace)
+		logrus.Warningf("Release name %v exists in namespace %v, will upgrade", releaseName, namespace)
 		valuesMap := map[string]interface{}{}
 		return hc.Upgrade(releaseName, namespace, chartRef, valuesMap)
 	}

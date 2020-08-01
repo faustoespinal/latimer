@@ -22,6 +22,7 @@ import (
 	"log"
 	"os"
 
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
@@ -45,12 +46,8 @@ charts:
 		- url: "{{.ChartLocation}}/redis/values.yaml"`,
 	Run: func(cmd *cobra.Command, args []string) {
 		latimerContext := core.GetLatimerContext()
-		log.Printf("Delete %v\n", latimerContext.ManifestPath)
-		mi := core.ManifestInput{
-			FilePath:      latimerContext.ManifestPath,
-			ChartLocation: latimerContext.ChartRegistry,
-		}
-		manifest, err := manifest.NewManifest(mi)
+		logrus.Infof("Delete %v\n", latimerContext.ManifestPath)
+		manifest, err := manifest.NewManifest(latimerContext.ManifestPath, latimerContext.Values)
 		if err != nil {
 			panic(err)
 		}

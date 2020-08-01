@@ -30,10 +30,10 @@ type Manifest struct {
 }
 
 // NewManifest creates a new manifest object from file contents
-func NewManifest(manifestArgs core.ManifestInput) (*Manifest, error) {
+func NewManifest(filePath string, values map[string]string) (*Manifest, error) {
 	m := new(Manifest)
 
-	descriptor, err := core.LoadManifestDescriptor(manifestArgs)
+	descriptor, err := core.LoadManifestDescriptor(filePath, values)
 	if err != nil {
 		return nil, err
 	}
