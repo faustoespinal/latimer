@@ -62,11 +62,9 @@ charts:
 		defer os.RemoveAll(installableTempDir) // clean up
 
 		sc := &core.SystemContext{
-			Name:            descriptor.Metadata.Name,
-			ReleaseName:     descriptor.Metadata.Name,
-			DeploymentSpace: "edison-core",
-			WorkTempDir:     installableTempDir,
-			Context:         latimerContext,
+			Name:        descriptor.Metadata.Name,
+			WorkTempDir: installableTempDir,
+			Context:     latimerContext,
 		}
 		manifest.Install(sc)
 	},

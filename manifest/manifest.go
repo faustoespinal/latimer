@@ -116,14 +116,14 @@ func (m *Manifest) Install(sc *core.SystemContext) bool {
 		case core.ChartType:
 			hc := m.charts[installItem.Name]
 			c := hc.Descriptor
+			releaseName := c.ReleaseName
+			namespace := c.Namespace
 			// Clone the system context and override values.
-			sysCtxt.DeploymentSpace = c.Namespace
-			sysCtxt.ReleaseName = c.ReleaseName
 			fmt.Printf("    Installing chart: %v\n", hc.Name)
 			hc.Install(&sysCtxt)
 			k8sClient := sysCtxt.Context.KubeClient
-			k8sClient.WaitForRelease(sysCtxt.ReleaseName, sysCtxt.DeploymentSpace, MaxInstallableWaitTime)
-			logrus.Infof("Installed HELM chart %v\n", sysCtxt.ReleaseName)
+			k8sClient.WaitForRelease(releaseName, namespace, MaxInstallableWaitTime)
+			logrus.Infof("Installed HELM chart %v\n", releaseName)
 		case core.PackageType:
 			p := m.packages[installItem.Name]
 			fmt.Printf("    Installing package: %v\n", p.Name)
@@ -154,11 +154,9 @@ func (m *Manifest) Uninstall(sc *core.SystemContext) bool {
 		case core.ChartType:
 			hc := m.charts[installItem.Name]
 			c := hc.Descriptor
-			// Clone the system context and override values.
-			sysCtxt.DeploymentSpace = c.Namespace
-			sysCtxt.ReleaseName = c.ReleaseName
+			releaseName := c.ReleaseName
 			hc.Uninstall(&sysCtxt)
-			logrus.Infof("Uninstalled HELM chart %v\n", sysCtxt.ReleaseName)
+			logrus.Infof("Uninstalled HELM chart %v\n", releaseName)
 		case core.PackageType:
 			p := m.packages[installItem.Name]
 			p.Uninstall(&sysCtxt)
@@ -175,8 +173,6 @@ func (m *Manifest) Uninstall(sc *core.SystemContext) bool {
 func (m *Manifest) Status(sc *core.SystemContext) kube.InstallStatus {
 	for _, swItem := range m.charts {
 		chartSC := *sc
-		chartSC.DeploymentSpace = swItem.Descriptor.Namespace
-		chartSC.ReleaseName = swItem.Descriptor.ReleaseName
 		status := swItem.Status(&chartSC)
 		if status != kube.Ready {
 			return kube.NotReady

@@ -54,8 +54,8 @@ func (hc *Chart) StringYaml() string {
 
 // Install the contents of the installable
 func (hc *Chart) Install(sc *core.SystemContext) bool {
-	releaseNamespace := sc.DeploymentSpace
-	releaseName := sc.ReleaseName
+	releaseNamespace := hc.Descriptor.Namespace
+	releaseName := hc.Descriptor.ReleaseName
 
 	helmClient := NewHelmClient()
 	releaseInfo, err := helmClient.Install(releaseName, releaseNamespace, hc.ChartRef)
@@ -72,8 +72,8 @@ func (hc *Chart) Install(sc *core.SystemContext) bool {
 
 // Uninstall the contents of this installable
 func (hc *Chart) Uninstall(sc *core.SystemContext) bool {
-	releaseNamespace := sc.DeploymentSpace
-	releaseName := sc.ReleaseName
+	releaseNamespace := hc.Descriptor.Namespace
+	releaseName := hc.Descriptor.ReleaseName
 
 	helmClient := NewHelmClient()
 	err := helmClient.Delete(releaseName, releaseNamespace)
@@ -88,8 +88,8 @@ func (hc *Chart) Uninstall(sc *core.SystemContext) bool {
 // Status returns the status of the  installation
 func (hc *Chart) Status(sc *core.SystemContext) kube.InstallStatus {
 	k8s := sc.Context.KubeClient
-	namespace := sc.DeploymentSpace
-	releaseName := sc.ReleaseName
+	namespace := hc.Descriptor.Namespace
+	releaseName := hc.Descriptor.ReleaseName
 	rr := k8s.GetResourcesInRelease(releaseName, namespace)
 	return rr.ReleaseStatus()
 }

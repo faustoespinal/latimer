@@ -72,8 +72,6 @@ func (p *Package) Status(sc *core.SystemContext) kube.InstallStatus {
 	packageStatus := kube.Ready
 	for _, swItem := range p.Charts {
 		chartSC := *sc
-		chartSC.DeploymentSpace = swItem.Descriptor.Namespace
-		chartSC.ReleaseName = swItem.Descriptor.ReleaseName
 		status := swItem.Status(&chartSC)
 		if status != kube.Ready {
 			packageStatus = kube.NotReady
