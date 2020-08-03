@@ -10,22 +10,22 @@ charts:
     namespace: "paas"
     chartLocator: "bitnami/redis"
     releaseName: "test-redis"
+    timeout: 300
     values:
-      - url: "{{.ChartLocation}}/redis/values.yaml"
+      - url: "values/values-redis.yaml"
   - name: "mysql"
     chartName: "stable/mysql"
     namespace: "paas"
     chartLocator: "stable/mysql"
     releaseName: "test-mysql"
+    timeout: 300
     values:
-      - url: "{{.ChartLocation}}/mysql/values.yaml"
+      - url: "values/values-mysql.yaml"
   - name: "traefik"
     chartName: "stable/traefik"
     namespace: "paas"
     chartLocator: "stable/traefik"
     releaseName: "test-traefik"
-    values:
-      - url: "{{.ChartLocation}}/traefik/values.yaml"
 packages:
   - name: "databases"
     charts:

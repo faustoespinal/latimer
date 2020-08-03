@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"html/template"
 	"log"
+	"path/filepath"
 
 	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
@@ -26,10 +27,12 @@ type ChartDescriptor struct {
 	Namespace    string `json:"namespace"`
 	ChartLocator string `json:"chartLocator" yaml:"chartLocator"`
 	ReleaseName  string `json:"releaseName" yaml:"releaseName"`
-	Values       []struct {
+	// Timeout is the value in seconds to wait for chart to come up before giving up
+	Timeout int `json:"timeout,omitempty"`
+	Values  []struct {
 		// URL is the locator for the values yaml file
 		URL string `json:"url"`
-	} `json:"values"`
+	} `json:"values,omitempty"`
 }
 
 // PackageDescriptor groups a collection of chart descriptors
@@ -68,6 +71,14 @@ func LoadManifestDescriptor(filePath string, values map[string]string) (*Manifes
 	if err != nil {
 		log.Fatalf("Unmarshal: %v", err)
 		return nil, err
+	}
+	dirname := filepath.Dir(filePath)
+	for _, chart := range m.Charts {
+		if len(chart.Values) > 0 {
+			for idx, path := range chart.Values {
+				chart.Values[idx].URL = filepath.Join(dirname, path.URL)
+			}
+		}
 	}
 	return m, nil
 }

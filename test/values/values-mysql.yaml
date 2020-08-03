@@ -1,0 +1,8 @@
+livenessProbe:
+    initialDelaySeconds: 35
+    periodSeconds: 10
+  
+readinessProbe:
+    initialDelaySeconds: 7
+    periodSeconds: 10
+    

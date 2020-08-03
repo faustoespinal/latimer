@@ -1,0 +1,13 @@
+livenessProbe:
+    initialDelaySeconds: 10
+    periodSeconds: 7
+  
+readinessProbe:
+    initialDelaySeconds: 7
+    periodSeconds: 7
+      
+
+## Cluster settings
+cluster:
+    enabled: false
+  

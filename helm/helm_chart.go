@@ -17,7 +17,11 @@ type Chart struct {
 	// ChartRef is the locator for the chart (eg chart repository or local file system)
 	ChartRef string `json:"chartRef"`
 
+	// The chart descriptor
 	Descriptor *core.ChartDescriptor `json:"descriptor"`
+
+	// The loaded values map
+	ValuesMap map[string]interface{}
 }
 
 // NewChart creates a new instance of a helm chart
@@ -26,6 +30,15 @@ func NewChart(chartDescriptor *core.ChartDescriptor) *Chart {
 	hc.Name = chartDescriptor.Name
 	hc.ChartRef = chartDescriptor.ChartLocator
 	hc.Descriptor = chartDescriptor
+	valuesFiles := make([]string, 0)
+	for _, valueFile := range hc.Descriptor.Values {
+		valuesFiles = append(valuesFiles, valueFile.URL)
+	}
+	valMap, err := loadHelmValues(valuesFiles)
+	if err != nil {
+		panic("Error loading values file for chart: " + hc.Name)
+	}
+	hc.ValuesMap = valMap
 	return hc
 }
 
@@ -58,7 +71,7 @@ func (hc *Chart) Install(sc *core.SystemContext) bool {
 	releaseName := hc.Descriptor.ReleaseName
 
 	helmClient := NewHelmClient()
-	releaseInfo, err := helmClient.Install(releaseName, releaseNamespace, hc.ChartRef)
+	releaseInfo, err := helmClient.Install(releaseName, releaseNamespace, hc.ChartRef, hc.ValuesMap)
 	status := true
 	if releaseInfo != nil && err != nil {
 		logrus.Warningf("Helm chart %v is already installed in the namespace %v", releaseName, releaseNamespace)

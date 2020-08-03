@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/sirupsen/logrus"
+	"gopkg.in/yaml.v2"
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chart/loader"
@@ -60,13 +61,12 @@ func (hc *HelmClient) Upgrade(releaseName string, namespace string, chartRef str
 }
 
 // Install deploys the helm chart located in the specified chart location
-func (hc *HelmClient) Install(releaseName string, namespace string, chartRef string) (*release.Release, error) {
+func (hc *HelmClient) Install(releaseName string, namespace string, chartRef string, valuesMap map[string]interface{}) (*release.Release, error) {
 	// Check if release name is already present
 	releaseInfo, err := hc.Status(releaseName, namespace)
 	if releaseInfo != nil && err == nil {
 		//return releaseInfo, fmt.Errorf("Release %v exists in namespace %v", releaseName, namespace)
 		logrus.Warningf("Release name %v exists in namespace %v, will upgrade", releaseName, namespace)
-		valuesMap := map[string]interface{}{}
 		return hc.Upgrade(releaseName, namespace, chartRef, valuesMap)
 	}
 	logrus.Infof("Installing chart with chartRef=%v to namespace %v", chartRef, namespace)
@@ -86,7 +86,7 @@ func (hc *HelmClient) Install(releaseName string, namespace string, chartRef str
 	iCli.ReleaseName = releaseName
 	iCli.DryRun = false
 
-	rel, err := iCli.Run(chart, nil)
+	rel, err := iCli.Run(chart, valuesMap)
 	if err != nil {
 		return nil, err
 	}
@@ -182,4 +182,51 @@ func newHelmConfig(releaseNamespace string) (*action.Configuration, error) {
 		return nil, err
 	}
 	return actionConfig, err
+}
+
+// Load helm values files in the order specified by the array.  Later file entries will overwrite earlier ones.
+func loadHelmValues(valueFiles []string) (map[string]interface{}, error) {
+	base := map[string]interface{}{}
+
+	// User specified a values files via -f/--values
+	for _, filePath := range valueFiles {
+		currentMap := map[string]interface{}{}
+
+		bytes, err := readFile(filePath)
+		if err != nil {
+			return nil, err
+		}
+
+		if err := yaml.Unmarshal(bytes, &currentMap); err != nil {
+			return nil, err
+		}
+		// Merge with the previous map
+		base = mergeMaps(base, currentMap)
+	}
+	return base, nil
+}
+
+// mergeMaps merges 2 maps returning the unified instance
+func mergeMaps(a, b map[string]interface{}) map[string]interface{} {
+	out := make(map[string]interface{}, len(a))
+	for k, v := range a {
+		out[k] = v
+	}
+	for k, v := range b {
+		if v, ok := v.(map[string]interface{}); ok {
+			if bv, ok := out[k]; ok {
+				if bv, ok := bv.(map[string]interface{}); ok {
+					out[k] = mergeMaps(bv, v)
+					continue
+				}
+			}
+		}
+		out[k] = v
+	}
+	return out
+}
+
+// readFile load a file from stdin, the local directory, or a remote file with a url.
+func readFile(filePath string) ([]byte, error) {
+	return ioutil.ReadFile(filePath)
 }

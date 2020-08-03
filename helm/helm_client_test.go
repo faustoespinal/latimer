@@ -37,7 +37,8 @@ func Test_helm_install(t *testing.T) {
 		helmClient := NewHelmClient()
 		releaseName := "test-mem"
 		namespace := "paas"
-		release, err := helmClient.Install(releaseName, namespace, ChartRef)
+		valuesMap := map[string]interface{}{}
+		release, err := helmClient.Install(releaseName, namespace, ChartRef, valuesMap)
 		if err != nil {
 			panic(err.Error())
 		}
