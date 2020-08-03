@@ -75,12 +75,17 @@ func (hc *Chart) Uninstall(sc *core.SystemContext) bool {
 	releaseNamespace := hc.Descriptor.Namespace
 	releaseName := hc.Descriptor.ReleaseName
 
-	helmClient := NewHelmClient()
-	err := helmClient.Delete(releaseName, releaseNamespace)
 	status := true
-	if err != nil {
-		logrus.Errorf("Delete failed [%v]\n", err.Error())
-		status = false
+	helmClient := NewHelmClient()
+	release, err := helmClient.Status(releaseName, releaseNamespace)
+
+	// If release does not exist already we just return successful uninstall
+	if err == nil && release != nil {
+		err := helmClient.Delete(releaseName, releaseNamespace)
+		if err != nil {
+			logrus.Errorf("Delete failed [%v]\n", err.Error())
+			status = false
+		}
 	}
 	return status
 }

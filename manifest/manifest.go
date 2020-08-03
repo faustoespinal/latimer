@@ -145,7 +145,7 @@ func (m *Manifest) Install(sc *core.SystemContext) bool {
 // Uninstall the contents of this installable
 func (m *Manifest) Uninstall(sc *core.SystemContext) bool {
 	manifestID := m.GetID()
-	// Initialize installation buffer table
+	// Initialize installation buffer table: 12x20x31
 	installationTable := map[string]bool{}
 	installList := m.createInstallOrderFrom(core.InstallableItem{
 		Name: manifestID,
