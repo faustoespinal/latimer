@@ -87,7 +87,7 @@ func Test_WaitForRelease(t *testing.T) {
 	releaseName := "test-mysql"
 	namespace := "paas"
 	t.Run("wait-for-release", func(t *testing.T) {
-		waitStatus, err := k8s.WaitForRelease(releaseName, namespace, 3*time.Second)
+		waitStatus, err := k8s.WaitForRelease(releaseName, namespace, 20*time.Second)
 		if err != nil {
 			t.Errorf("Error obtaining resources in release %v error=[%v]", releaseName, err)
 		}
