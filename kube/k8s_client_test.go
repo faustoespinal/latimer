@@ -63,7 +63,10 @@ func Test_GetResourcesInRelease(t *testing.T) {
 	releaseName := "test-mysql"
 	namespace := "paas"
 	t.Run("deployments-in", func(t *testing.T) {
-		resources := k8s.GetResourcesInRelease(releaseName, namespace)
+		resources, err := k8s.GetResourcesInRelease(releaseName, namespace)
+		if err != nil {
+			t.Errorf("Error obtaining resources in release %v error=[%v]", releaseName, err)
+		}
 		if len(resources.Deployments) <= 0 {
 			t.Errorf("No deployments in namespace %v\n", namespace)
 		} else {
@@ -84,7 +87,10 @@ func Test_WaitForRelease(t *testing.T) {
 	releaseName := "test-mysql"
 	namespace := "paas"
 	t.Run("wait-for-release", func(t *testing.T) {
-		waitStatus := k8s.WaitForRelease(releaseName, namespace, 3*time.Second)
+		waitStatus, err := k8s.WaitForRelease(releaseName, namespace, 3*time.Second)
+		if err != nil {
+			t.Errorf("Error obtaining resources in release %v error=[%v]", releaseName, err)
+		}
 		if waitStatus {
 			t.Logf("Release %v has been installed\n", releaseName)
 		} else {

@@ -29,11 +29,11 @@ func NewHelmClient() *HelmClient {
 	return hc
 }
 
-// Returns the status of the helm release in the given namespace.  Used to know if release exists
+// Status returns the status of the helm release in the given namespace.  Used to know if release exists
 func (hc *HelmClient) Status(releaseName string, namespace string) (*release.Release, error) {
 	actionConfig, err := newHelmConfig(namespace)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	iCli := action.NewStatus(actionConfig)
@@ -51,7 +51,7 @@ func (hc *HelmClient) Upgrade(releaseName string, namespace string, chartRef str
 
 	actionConfig, err := newHelmConfig(namespace)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	iCli := action.NewUpgrade(actionConfig)
@@ -78,7 +78,7 @@ func (hc *HelmClient) Install(releaseName string, namespace string, chartRef str
 
 	actionConfig, err := newHelmConfig(namespace)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	iCli := action.NewInstall(actionConfig)
@@ -88,7 +88,7 @@ func (hc *HelmClient) Install(releaseName string, namespace string, chartRef str
 
 	rel, err := iCli.Run(chart, nil)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 	logrus.Debugf("Successfully submitted release: %v --> %v\n", rel.Name, rel.Namespace)
 	return rel, nil
@@ -179,7 +179,7 @@ func newHelmConfig(releaseNamespace string) (*action.Configuration, error) {
 		logrus.Infof("HELM: %v\n", strContent)
 	})
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 	return actionConfig, err
 }

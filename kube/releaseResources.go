@@ -16,6 +16,8 @@ const (
 	Ready
 	// NotInstalled means that nothing has been installed for the installable (no resource artifacts exist)
 	NotInstalled
+	// InstallationError indicates some error condition with the installation (error obtaining install info...)
+	InstallationError
 )
 
 // ReleaseResources collects core resources under a release

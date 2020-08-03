@@ -95,6 +95,9 @@ func (hc *Chart) Status(sc *core.SystemContext) kube.InstallStatus {
 	k8s := sc.Context.KubeClient
 	namespace := hc.Descriptor.Namespace
 	releaseName := hc.Descriptor.ReleaseName
-	rr := k8s.GetResourcesInRelease(releaseName, namespace)
+	rr, err := k8s.GetResourcesInRelease(releaseName, namespace)
+	if err != nil {
+		return kube.InstallationError
+	}
 	return rr.ReleaseStatus()
 }

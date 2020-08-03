@@ -80,13 +80,14 @@ func (k8s *K8sClient) DeleteNamespace(namespace string) error {
 }
 
 // GetResourcesInRelease returns all runtime resources under a given release name in a namespace
-func (k8s *K8sClient) GetResourcesInRelease(releaseName string, releaseNamespace string) *ReleaseResources {
+func (k8s *K8sClient) GetResourcesInRelease(releaseName string, releaseNamespace string) (*ReleaseResources, error) {
 	rr := NewReleaseResources(releaseName)
 	listOpts := metav1.ListOptions{}
 
 	namespaceList, err := k8s.clientSet.CoreV1().Namespaces().List(context.TODO(), listOpts)
 	if err != nil {
-		panic("Cannot obtain the list of namespaces")
+		logrus.Error("Cannot obtain the list of namespaces")
+		return nil, err
 	}
 
 	// Search for release artifacts across all namespaces since helm charts can deposit resources in several namespaces
@@ -99,7 +100,8 @@ func (k8s *K8sClient) GetResourcesInRelease(releaseName string, releaseNamespace
 		// Deployments
 		deployList, err := k8s.clientSet.AppsV1().Deployments(namespace).List(context.TODO(), listOpts)
 		if err != nil {
-			panic("Error getting deployments in namespace " + namespace)
+			logrus.Error("Error getting deployments in namespace " + namespace)
+			return nil, err
 		}
 		for _, deployment := range deployList.Items {
 			val, exists := deployment.Labels[LabelReleaseName]
@@ -110,7 +112,8 @@ func (k8s *K8sClient) GetResourcesInRelease(releaseName string, releaseNamespace
 		// StatefulSets
 		ssList, err := k8s.clientSet.AppsV1().StatefulSets(namespace).List(context.TODO(), listOpts)
 		if err != nil {
-			panic("Error getting statefulsets in namespace " + namespace)
+			logrus.Error("Error getting statefulsets in namespace " + namespace)
+			return nil, err
 		}
 		for _, ss := range ssList.Items {
 			val, exists := ss.Labels[LabelReleaseName]
@@ -121,7 +124,8 @@ func (k8s *K8sClient) GetResourcesInRelease(releaseName string, releaseNamespace
 		// Daemonsets
 		dsList, err := k8s.clientSet.AppsV1().DaemonSets(namespace).List(context.TODO(), listOpts)
 		if err != nil {
-			panic("Error getting daemonsets in namespace " + namespace)
+			logrus.Error("Error getting daemonsets in namespace " + namespace)
+			return nil, err
 		}
 		for _, ds := range dsList.Items {
 			val, exists := ds.Labels[LabelReleaseName]
@@ -132,7 +136,8 @@ func (k8s *K8sClient) GetResourcesInRelease(releaseName string, releaseNamespace
 		// Jobs
 		jobsList, err := k8s.clientSet.BatchV1().Jobs(namespace).List(context.TODO(), listOpts)
 		if err != nil {
-			panic("Error getting jobs in namespace " + namespace)
+			logrus.Error("Error getting jobs in namespace " + namespace)
+			return nil, err
 		}
 		for _, job := range jobsList.Items {
 			val, exists := job.Labels[LabelReleaseName]
@@ -141,22 +146,28 @@ func (k8s *K8sClient) GetResourcesInRelease(releaseName string, releaseNamespace
 			}
 		}
 	}
-	return rr
+	return rr, nil
 }
 
 // WaitForRelease pauses for up to 'timeout' seconds waiting for the specified release to be fully installed
-func (k8s *K8sClient) WaitForRelease(releaseName string, namespace string, timeout time.Duration) bool {
+func (k8s *K8sClient) WaitForRelease(releaseName string, namespace string, timeout time.Duration) (bool, error) {
 	start := time.Now()
-	rr := k8s.GetResourcesInRelease(releaseName, namespace)
+	rr, err := k8s.GetResourcesInRelease(releaseName, namespace)
+	if err != nil {
+		return false, err
+	}
 	for rr.ReleaseStatus() != Ready {
 		time.Sleep(2 * time.Second)
 		end := time.Now()
 		elapsed := end.Sub(start)
 		if elapsed > timeout {
-			return false
+			return false, nil
 		}
-		rr = k8s.GetResourcesInRelease(releaseName, namespace)
+		rr, err = k8s.GetResourcesInRelease(releaseName, namespace)
+		if err != nil {
+			return false, err
+		}
 		logrus.Debugf("Waiting for release %v [%v] Elapsed=%v\n", releaseName, namespace, elapsed)
 	}
-	return true
+	return true, nil
 }
