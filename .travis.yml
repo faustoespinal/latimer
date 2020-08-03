@@ -34,7 +34,8 @@ before_script:
   - minikube update-context
   - sleep 5
   - kubectl create ns paas
+  - kubectl create ns db-paas
   - kubectl get ns
   - kubectl get nodes
-  - helm install test-mysql --namespace paas stable/mysql
-  - sleep 3
+  - helm install test-mysql --namespace db-paas stable/mysql
+  - sleep 5
