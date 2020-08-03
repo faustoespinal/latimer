@@ -2,13 +2,13 @@
 #     [stable/traefik] --> {} databases: [bitnami/redis, stable/mysql] }
 
 metadata:
-  name: install-manifest-2
+  name: install-manifest-3
   kind: manifest
 charts:
   - name: "redis"
     chartName: "bitnami/redis"
     namespace: "paas"
-    chartLocator: "{{.ChartLocation}}/redis-10.7.9.tgz"
+    chartLocator: "bitnami/redis"
     releaseName: "test-redis"
     values:
       - url: "{{.ChartLocation}}/redis/values.yaml"
@@ -29,9 +29,9 @@ charts:
 packages:
   - name: "databases"
     charts:
-      - name: "redis"
-        kind: chart
       - name: "mysql"
+        kind: chart
+      - name: "redis"
         kind: chart
 dependencies:
   - name: "traefik"

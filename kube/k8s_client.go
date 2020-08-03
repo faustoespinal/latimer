@@ -2,6 +2,7 @@ package kube
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -79,52 +80,65 @@ func (k8s *K8sClient) DeleteNamespace(namespace string) error {
 }
 
 // GetResourcesInRelease returns all runtime resources under a given release name in a namespace
-func (k8s *K8sClient) GetResourcesInRelease(releaseName string, namespace string) *ReleaseResources {
+func (k8s *K8sClient) GetResourcesInRelease(releaseName string, releaseNamespace string) *ReleaseResources {
 	rr := NewReleaseResources(releaseName)
 	listOpts := metav1.ListOptions{}
 
-	// Deployments
-	deployList, err := k8s.clientSet.AppsV1().Deployments(namespace).List(context.TODO(), listOpts)
+	namespaceList, err := k8s.clientSet.CoreV1().Namespaces().List(context.TODO(), listOpts)
 	if err != nil {
-		panic("Error getting deployments in namespace " + namespace)
+		panic("Cannot obtain the list of namespaces")
 	}
-	for _, deployment := range deployList.Items {
-		val, exists := deployment.Labels[LabelReleaseName]
-		if exists && val == releaseName {
-			rr.Deployments = append(rr.Deployments, deployment)
+
+	// Search for release artifacts across all namespaces since helm charts can deposit resources in several namespaces
+	for _, ns := range namespaceList.Items {
+		namespace := ns.Name
+		// Exclude resources in the 'kube-' namespaces
+		if strings.HasPrefix("kube-", namespace) {
+			continue
 		}
-	}
-	// StatefulSets
-	ssList, err := k8s.clientSet.AppsV1().StatefulSets(namespace).List(context.TODO(), listOpts)
-	if err != nil {
-		panic("Error getting statefulsets in namespace " + namespace)
-	}
-	for _, ss := range ssList.Items {
-		val, exists := ss.Labels[LabelReleaseName]
-		if exists && val == releaseName {
-			rr.StatefulSets = append(rr.StatefulSets, ss)
+		// Deployments
+		deployList, err := k8s.clientSet.AppsV1().Deployments(namespace).List(context.TODO(), listOpts)
+		if err != nil {
+			panic("Error getting deployments in namespace " + namespace)
 		}
-	}
-	// Daemonsets
-	dsList, err := k8s.clientSet.AppsV1().DaemonSets(namespace).List(context.TODO(), listOpts)
-	if err != nil {
-		panic("Error getting daemonsets in namespace " + namespace)
-	}
-	for _, ds := range dsList.Items {
-		val, exists := ds.Labels[LabelReleaseName]
-		if exists && val == releaseName {
-			rr.DaemonSets = append(rr.DaemonSets, ds)
+		for _, deployment := range deployList.Items {
+			val, exists := deployment.Labels[LabelReleaseName]
+			if exists && val == releaseName {
+				rr.Deployments = append(rr.Deployments, deployment)
+			}
 		}
-	}
-	// Jobs
-	jobsList, err := k8s.clientSet.BatchV1().Jobs(namespace).List(context.TODO(), listOpts)
-	if err != nil {
-		panic("Error getting jobs in namespace " + namespace)
-	}
-	for _, job := range jobsList.Items {
-		val, exists := job.Labels[LabelReleaseName]
-		if exists && val == releaseName {
-			rr.Jobs = append(rr.Jobs, job)
+		// StatefulSets
+		ssList, err := k8s.clientSet.AppsV1().StatefulSets(namespace).List(context.TODO(), listOpts)
+		if err != nil {
+			panic("Error getting statefulsets in namespace " + namespace)
+		}
+		for _, ss := range ssList.Items {
+			val, exists := ss.Labels[LabelReleaseName]
+			if exists && val == releaseName {
+				rr.StatefulSets = append(rr.StatefulSets, ss)
+			}
+		}
+		// Daemonsets
+		dsList, err := k8s.clientSet.AppsV1().DaemonSets(namespace).List(context.TODO(), listOpts)
+		if err != nil {
+			panic("Error getting daemonsets in namespace " + namespace)
+		}
+		for _, ds := range dsList.Items {
+			val, exists := ds.Labels[LabelReleaseName]
+			if exists && val == releaseName {
+				rr.DaemonSets = append(rr.DaemonSets, ds)
+			}
+		}
+		// Jobs
+		jobsList, err := k8s.clientSet.BatchV1().Jobs(namespace).List(context.TODO(), listOpts)
+		if err != nil {
+			panic("Error getting jobs in namespace " + namespace)
+		}
+		for _, job := range jobsList.Items {
+			val, exists := job.Labels[LabelReleaseName]
+			if exists && val == releaseName {
+				rr.Jobs = append(rr.Jobs, job)
+			}
 		}
 	}
 	return rr
