@@ -77,7 +77,7 @@ func (hc *Chart) Install(sc *core.SystemContext) bool {
 		logrus.Warningf("Helm chart %v is already installed in the namespace %v", releaseName, releaseNamespace)
 		status = false
 	} else if err != nil {
-		logrus.Errorf("Install failed [%v]\n", err.Error())
+		logrus.Errorf("Install failed [%v]\n", err)
 		status = false
 	}
 	return status

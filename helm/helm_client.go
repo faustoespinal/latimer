@@ -88,6 +88,7 @@ func (hc *HelmClient) Install(releaseName string, namespace string, chartRef str
 
 	rel, err := iCli.Run(chart, valuesMap)
 	if err != nil {
+		logrus.Errorf("Error running install: [%v]", err)
 		return nil, err
 	}
 	logrus.Debugf("Successfully submitted release: %v --> %v\n", rel.Name, rel.Namespace)
@@ -192,6 +193,7 @@ func loadHelmValues(valueFiles []string) (map[string]interface{}, error) {
 	for _, filePath := range valueFiles {
 		currentMap := map[string]interface{}{}
 
+		logrus.Infof("Reading values yaml file %v", filePath)
 		bytes, err := readFile(filePath)
 		if err != nil {
 			return nil, err
@@ -203,6 +205,7 @@ func loadHelmValues(valueFiles []string) (map[string]interface{}, error) {
 		// Merge with the previous map
 		base = mergeMaps(base, currentMap)
 	}
+	base = convertStringKeyMap(base)
 	return base, nil
 }
 
@@ -224,6 +227,28 @@ func mergeMaps(a, b map[string]interface{}) map[string]interface{} {
 		out[k] = v
 	}
 	return out
+}
+
+// convertStringKeyMap converts internal map[interface{}]interface{} types to map[string]interface{}
+func convertStringKeyMap(m map[string]interface{}) map[string]interface{} {
+	a := make(map[string]interface{}, len(m))
+	logrus.Debugf("=======================================================")
+	logrus.Debugf("map = %#v", m)
+	for k, v := range m {
+		if aMap, ok := v.(map[interface{}]interface{}); ok {
+			logrus.Debugf("######### key=[%v]  valueMAP=[%v]", k, aMap)
+			nm := make(map[string]interface{}, len(aMap))
+			for kk, vv := range aMap {
+				strKey := kk.(string)
+				nm[strKey] = vv
+			}
+			a[k] = convertStringKeyMap(nm)
+		} else {
+			logrus.Debugf("######### key=[%v]  valueSTR=[%v]", k, v)
+			a[k] = v
+		}
+	}
+	return a
 }
 
 // readFile load a file from stdin, the local directory, or a remote file with a url.
