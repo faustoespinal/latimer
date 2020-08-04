@@ -77,7 +77,7 @@ func (hc *Chart) Install(sc *core.SystemContext) bool {
 		logrus.Warningf("Helm chart %v is already installed in the namespace %v", releaseName, releaseNamespace)
 		status = false
 	} else if err != nil {
-		logrus.Errorf("Install failed [%v]\n", err)
+		logrus.Errorf("Install failed [%v]", err)
 		status = false
 	}
 	return status
@@ -96,7 +96,7 @@ func (hc *Chart) Uninstall(sc *core.SystemContext) bool {
 	if err == nil && release != nil {
 		err := helmClient.Delete(releaseName, releaseNamespace)
 		if err != nil {
-			logrus.Errorf("Delete failed [%v]\n", err.Error())
+			logrus.Errorf("Delete failed [%v]", err.Error())
 			status = false
 		}
 	}

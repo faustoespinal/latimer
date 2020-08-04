@@ -8,7 +8,6 @@ import (
 	"latimer/helm"
 	"latimer/kube"
 	"latimer/pkg"
-	"log"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -126,16 +125,16 @@ func (m *Manifest) Install(sc *core.SystemContext) bool {
 			}
 			c := hc.Descriptor
 			releaseName := c.ReleaseName
-			fmt.Printf("    Installing chart: %v\n", hc.Name)
+			fmt.Printf("    Installing chart: %v", hc.Name)
 			hc.Install(&sysCtxt)
-			logrus.Infof("Installed HELM chart %v\n", releaseName)
+			logrus.Infof("Installed HELM chart %v", releaseName)
 		case core.PackageType:
 			p := m.packages[installItem.Name]
-			fmt.Printf("    Installing package: %v\n", p.Name)
+			fmt.Printf("    Installing package: %v", p.Name)
 			p.Install(&sysCtxt)
-			logrus.Infof("Installed Package %v\n", p.Name)
+			logrus.Infof("Installed Package %v", p.Name)
 		case core.ManifestType:
-			logrus.Infof("Installed manifest %v\n", installItem.Name)
+			logrus.Infof("Installed manifest %v", installItem.Name)
 		}
 		logrus.Info("===============================================================")
 	}
@@ -151,7 +150,7 @@ func (m *Manifest) Uninstall(sc *core.SystemContext) bool {
 		Name: manifestID,
 		Kind: core.ManifestType,
 	}, installationTable)
-	logrus.Infof("Uninstall manifest %v : [%v", manifestID, installList)
+	logrus.Infof("Uninstall manifest %v : [%v]", manifestID, installList)
 	for idx := len(installList) - 1; idx >= 0; idx-- {
 		installItem := installList[idx]
 		sysCtxt := *sc
@@ -162,15 +161,15 @@ func (m *Manifest) Uninstall(sc *core.SystemContext) bool {
 			c := hc.Descriptor
 			releaseName := c.ReleaseName
 			hc.Uninstall(&sysCtxt)
-			logrus.Infof("Uninstalled HELM chart %v\n", releaseName)
+			logrus.Infof("Uninstalled HELM chart %v", releaseName)
 		case core.PackageType:
 			p := m.packages[installItem.Name]
 			p.Uninstall(&sysCtxt)
-			logrus.Infof("Uninstalled Package %v\n", p.Name)
+			logrus.Infof("Uninstalled Package %v", p.Name)
 		case core.ManifestType:
-			logrus.Infof("Uninstalled manifest %v\n", installItem.Name)
+			logrus.Infof("Uninstalled manifest %v", installItem.Name)
 		}
-		log.Println("===============================================================")
+		logrus.Infof("===============================================================")
 	}
 	return true
 }
@@ -214,7 +213,7 @@ func (m *Manifest) waitForDependencies(sc *core.SystemContext, itemID string) er
 					if elapsed > timeout {
 						return errors.New("Timeout expired for: " + installable.GetID())
 					}
-					logrus.Debugf("       Waiting for release %v Elapsed=%v\n", installable.GetID(), elapsed)
+					logrus.Debugf("       Waiting for release %v Elapsed=%v", installable.GetID(), elapsed)
 				}
 			}
 		}

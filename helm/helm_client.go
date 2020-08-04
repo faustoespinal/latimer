@@ -193,9 +193,10 @@ func loadHelmValues(valueFiles []string) (map[string]interface{}, error) {
 	for _, filePath := range valueFiles {
 		currentMap := map[string]interface{}{}
 
-		logrus.Infof("Reading values yaml file %v", filePath)
+		logrus.Debugf("Reading values yaml file %v", filePath)
 		bytes, err := readFile(filePath)
 		if err != nil {
+			logrus.Errorf("Error reading values yaml file: %v [%v]", filePath, err)
 			return nil, err
 		}
 
