@@ -65,11 +65,9 @@ func (hc *HelmClient) Install(releaseName string, namespace string, chartRef str
 	// Check if release name is already present
 	releaseInfo, err := hc.Status(releaseName, namespace)
 	if releaseInfo != nil && err == nil {
-		//return releaseInfo, fmt.Errorf("Release %v exists in namespace %v", releaseName, namespace)
 		logrus.Warningf("Release name %v exists in namespace %v, will upgrade", releaseName, namespace)
-		return hc.Upgrade(releaseName, namespace, chartRef, valuesMap)
+		return releaseInfo, nil
 	}
-	logrus.Infof("Installing chart with chartRef=%v to namespace %v", chartRef, namespace)
 	chart, err := hc.loadChart(chartRef)
 	if err != nil {
 		logrus.Errorf("Error loading chart from location=%v", chartRef)
@@ -78,6 +76,7 @@ func (hc *HelmClient) Install(releaseName string, namespace string, chartRef str
 
 	actionConfig, err := newHelmConfig(namespace)
 	if err != nil {
+		logrus.Errorf("Error obtaining helm-config: [%v]", err)
 		return nil, err
 	}
 

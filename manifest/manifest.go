@@ -72,10 +72,6 @@ func NewManifest(filePath string, values map[string]string) (*Manifest, error) {
 	for _, dItem := range descriptor.DependencyItems {
 		m.dependencies[dItem.Name] = dItem.Requires
 	}
-	for _, pkg := range m.Descriptor.Packages {
-		pkgID := pkg.Name
-		m.dependencies[pkgID] = pkg.Charts
-	}
 	m.dependencies[manifestID] = manifestDeps
 	return m, nil
 }
@@ -105,13 +101,7 @@ func (m *Manifest) StringYaml() string {
 
 // Install the contents of the installable
 func (m *Manifest) Install(sc *core.SystemContext) bool {
-	manifestID := m.GetID()
-	// Initialize installation buffer table
-	installationTable := map[string]bool{}
-	installList := m.createInstallOrderFrom(core.InstallableItem{
-		Name: manifestID,
-		Kind: core.ManifestType,
-	}, installationTable)
+	installList := m.installList()
 	fmt.Printf("Installing manifest: %v [%v]\n", m.Descriptor.Metadata.Name, installList)
 	for _, installItem := range installList {
 		// Clone the system context and override values.
@@ -144,12 +134,7 @@ func (m *Manifest) Install(sc *core.SystemContext) bool {
 // Uninstall the contents of this installable
 func (m *Manifest) Uninstall(sc *core.SystemContext) bool {
 	manifestID := m.GetID()
-	// Initialize installation buffer table: 12x20x31
-	installationTable := map[string]bool{}
-	installList := m.createInstallOrderFrom(core.InstallableItem{
-		Name: manifestID,
-		Kind: core.ManifestType,
-	}, installationTable)
+	installList := m.installList()
 	logrus.Infof("Uninstall manifest %v : [%v]", manifestID, installList)
 	for idx := len(installList) - 1; idx >= 0; idx-- {
 		installItem := installList[idx]
@@ -188,10 +173,10 @@ func (m *Manifest) Status(sc *core.SystemContext) kube.InstallStatus {
 
 // Wait for all dependencies before installing the given itemID
 func (m *Manifest) waitForDependencies(sc *core.SystemContext, itemID string) error {
-	// Default 5 minutes
-	timeout := 300 * time.Second
 	depItems, found := m.dependencies[itemID]
 	if found {
+		// Default 5 minutes
+		timeout := 300 * time.Second
 		for _, item := range depItems {
 			var installable core.Installable = nil
 			chart, foundChart := m.charts[item.Name]
@@ -204,7 +189,7 @@ func (m *Manifest) waitForDependencies(sc *core.SystemContext, itemID string) er
 				}
 			}
 			if installable != nil {
-				logrus.Infof("%v waiting for dependency %v to complete install", itemID, installable.GetID())
+				fmt.Printf("    %v waiting for dependency %v to complete install", itemID, installable.GetID())
 				start := time.Now()
 				for installable.Status(sc) != kube.Ready {
 					time.Sleep(2 * time.Second)
@@ -221,10 +206,9 @@ func (m *Manifest) waitForDependencies(sc *core.SystemContext, itemID string) er
 	return nil
 }
 
-// Creates an ordered list of installation items reflecting the installation order given dependencies
-func (m *Manifest) createInstallOrderFrom(installItem core.InstallableItem, installTable map[string]bool) []core.InstallableItem {
+// followDeps creates an ordered list of installation items reflecting dependencies from the given root
+func (m *Manifest) followDeps(installItem core.InstallableItem, installTable map[string]bool) []core.InstallableItem {
 	name := installItem.Name
-	//kind := installItem.Kind
 	installed := installTable[name]
 
 	if installed {
@@ -234,7 +218,7 @@ func (m *Manifest) createInstallOrderFrom(installItem core.InstallableItem, inst
 	installList := make([]core.InstallableItem, 0)
 	if found {
 		for _, d := range deps {
-			depInstall := m.createInstallOrderFrom(d, installTable)
+			depInstall := m.followDeps(d, installTable)
 			if depInstall != nil {
 				installList = append(installList, depInstall...)
 			}
@@ -242,5 +226,43 @@ func (m *Manifest) createInstallOrderFrom(installItem core.InstallableItem, inst
 	}
 	installList = append(installList, installItem)
 	installTable[name] = true
+	if installItem.Kind == core.PackageType {
+		// Mark all contained
+		pkgName := installItem.Name
+		pkg, found := m.packages[pkgName]
+		if found {
+			for _, c := range pkg.Charts {
+				installTable[c.Name] = true
+			}
+		}
+	}
+	return installList
+}
+
+// Creates an ordered list of installation items reflecting the installation order given dependencies
+func (m *Manifest) installList() []core.InstallableItem {
+	installTable := make(map[string]bool, 0)
+	installList := make([]core.InstallableItem, 0)
+
+	for k := range m.dependencies {
+		list := []core.InstallableItem(nil)
+		if _, found := m.charts[k]; found {
+			list = m.followDeps(core.InstallableItem{
+				Name: k,
+				Kind: core.ChartType,
+			}, installTable)
+		} else if _, found := m.packages[k]; found {
+			list = m.followDeps(core.InstallableItem{
+				Name: k,
+				Kind: core.PackageType,
+			}, installTable)
+		}
+		installList = append(installList, list...)
+	}
+	list := m.followDeps(core.InstallableItem{
+		Name: m.GetID(),
+		Kind: core.ManifestType,
+	}, installTable)
+	installList = append(installList, list...)
 	return installList
 }

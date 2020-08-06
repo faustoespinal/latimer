@@ -5,6 +5,7 @@ import (
 	"os/user"
 	"path/filepath"
 	"testing"
+	"time"
 )
 
 const (
@@ -27,22 +28,19 @@ func getSystemContext(name string) *core.SystemContext {
 	return sc
 }
 
-func Test_ManifestCapabilities(t *testing.T) {
+func Test_ManifestInstallOrder(t *testing.T) {
 	t.Run("manifest-install-order", func(t *testing.T) {
 		values := map[string]string{}
 		m, err := NewManifest(ManifestFilePath, values)
 		if err != nil {
 			t.Errorf("%v", err)
 		}
-		installationTable := map[string]bool{}
-		manifestID := m.GetID()
-		installList := m.createInstallOrderFrom(core.InstallableItem{
-			Name: manifestID,
-			Kind: core.ManifestType,
-		}, installationTable)
+		installList := m.installList()
 		t.Logf("Install Order List: %v", installList)
 	})
+}
 
+func Test_ManifestInstall(t *testing.T) {
 	t.Run("manifest-installation", func(t *testing.T) {
 		values := map[string]string{}
 		m, err := NewManifest(ManifestFilePath, values)
@@ -57,14 +55,16 @@ func Test_ManifestCapabilities(t *testing.T) {
 		}
 		t.Logf("==================== Manifest installed: %v ======================", status)
 	})
+}
 
+func Test_ManifestDelete(t *testing.T) {
 	t.Run("manifest-deletion", func(t *testing.T) {
+		time.Sleep(5 * time.Second)
 		values := map[string]string{}
 		m, err := NewManifest(ManifestFilePath, values)
 		if err != nil {
 			t.Errorf("%v", err)
 		}
-
 		sc := getSystemContext(m.GetID())
 		status := m.Uninstall(sc)
 		if !status {
