@@ -38,4 +38,6 @@ before_script:
   - kubectl get ns
   - kubectl get nodes
   - helm install test-mysql --namespace db-paas stable/mysql
-  - sleep 5
+  - echo "Wait for helm chart to come up ...."
+  - sleep 15
+  - echo "Starting testing...."
