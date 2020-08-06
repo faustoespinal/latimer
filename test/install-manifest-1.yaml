@@ -9,68 +9,56 @@ charts:
   - name: "redis"
     chartName: "bitnami/redis"
     namespace: "paas"
-    chartLocator: "{{.ChartLocation}}/redis-10.7.9.tgz"
+    chartLocator: "bitnami/redis"
     releaseName: "test-redis"
     values:
-      - url: "{{.ChartLocation}}/redis/values.yaml"
+      - url: "values/values-redis.yaml"
   - name: "mysql"
     chartName: "stable/mysql"
     namespace: "paas"
-    chartLocator: "{{.ChartLocation}}/mysql-1.6.6.tgz"
+    chartLocator: "stable/mysql"
     releaseName: "test-mysql"
     values:
-      - url: "{{.ChartLocation}}/mysql/values.yaml"
+      - url: "values/values-mysql.yaml"
   - name: "postgresql"
     chartName: "bitnami/postgresql"
     namespace: "paas"
     chartLocator: "{{.ChartLocation}}/postgresql-8.10.14.tgz"
     releaseName: "test-postgresql"
-    values:
-      - url: "{{.ChartLocation}}/postgresql/values.yaml"
   - name: "prometheus"
     chartName: "stable/prometheus"
     namespace: "paas"
-    chartLocator: "{{.ChartLocation}}/prometheus-11.7.0.tgz"
+    chartLocator: "stable/prometheus"
     releaseName: "test-prometheus"
-    values:
-      - url: "{{.ChartLocation}}/prometheus/values.yaml"
   - name: "grafana"
     chartName: "stable/grafana"
     namespace: "saas"
-    chartLocator: "{{.ChartLocation}}/grafana-5.3.6.tgz"
+    chartLocator: "stable/grafana"
     releaseName: "test-grafana"
-    values:
-      - url: "{{.ChartLocation}}/grafana/values.yaml"
   - name: "wordpress"
     chartName: "stable/wordpress"
     namespace: "saas"
-    chartLocator: "{{.ChartLocation}}/wordpress-9.0.3.tgz"
+    chartLocator: "stable/wordpress"
     releaseName: "test-wordpress"
-    values:
-      - url: "{{.ChartLocation}}/wordpress/values.yaml"
   - name: "traefik"
     chartName: "stable/traefik"
     namespace: "paas"
-    chartLocator: "{{.ChartLocation}}/traefik-1.87.2.tgz"
+    chartLocator: "stable/traefik"
     releaseName: "test-traefik"
-    values:
-      - url: "{{.ChartLocation}}/traefik/values.yaml"
   - name: "keycloak"
     chartName: "codecentric/keycloak"
     namespace: "paas"
-    chartLocator: "{{.ChartLocation}}/keycloak-8.2.2.tgz"
+    chartLocator: "codecentric/keycloak"
     releaseName: "test-keycloak"
-    values:
-      - url: "{{.ChartLocation}}/keycloak/values.yaml"
 packages:
   - name: "databases"
     charts:
       - name: "postgresql"
-        kind: package
+        kind: chart
       - name: "mysql"
-        kind: package
+        kind: chart
       - name: "redis"
-        kind: package
+        kind: chart
 dependencies:
   - name: "wordpress"
     requires:
@@ -86,22 +74,11 @@ dependencies:
         kind: chart
   - name: "keycloak"
     requires:
-      - name: "postgresql"
-        kind: chart
-      - name: "mysql"
-        kind: chart
-      - name: "redis"
-        kind: chart
-  - name: "redis"
+      - name: "databases"
+        kind: package
+  - name: "databases"
     requires:
       - name: "prometheus"
         kind: chart
-  - name: "postgresql"
-    requires:
-      - name: "prometheus"
-        kind: chart
-  - name: "mysql"
-    requires:
-      - name: "prometheus"
-        kind: chart
+
 

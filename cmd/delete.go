@@ -46,10 +46,12 @@ charts:
 		- url: "{{.ChartLocation}}/redis/values.yaml"`,
 	Run: func(cmd *cobra.Command, args []string) {
 		latimerContext := core.GetLatimerContext()
-		logrus.Infof("Delete %v\n", latimerContext.ManifestPath)
-		manifest, err := manifest.NewManifest(latimerContext.ManifestPath, latimerContext.Values)
+		filePath := latimerContext.ManifestPath
+		logrus.Infof("Delete %v\n", filePath)
+		manifest, err := manifest.NewManifest(filePath, latimerContext.Values)
 		if err != nil {
-			panic(err)
+			logrus.Errorf("Error loading manifest file: %v", filePath)
+			os.Exit(1)
 		}
 		//log.Printf("\n%v\n", manifest.StringYaml())
 

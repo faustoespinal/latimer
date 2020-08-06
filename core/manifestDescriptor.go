@@ -18,6 +18,8 @@ const (
 	PackageType = "package"
 	// ManifestType is constant denoting an installable item of type manifest
 	ManifestType = "manifest"
+	// Default timeout for a chart is 5 minutes
+	DefaultChartTimeoutSeconds = 300
 )
 
 // ChartDescriptor describes a chart
@@ -78,6 +80,9 @@ func LoadManifestDescriptor(filePath string, values map[string]string) (*Manifes
 			for idx, path := range chart.Values {
 				chart.Values[idx].URL = filepath.Join(dirname, path.URL)
 			}
+		}
+		if chart.Timeout <= 0 {
+			chart.Timeout = DefaultChartTimeoutSeconds
 		}
 	}
 	return m, nil

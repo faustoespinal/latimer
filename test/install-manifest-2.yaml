@@ -1,7 +1,4 @@
-# Sample manifest with 7 charts: bitnami/redis, stable/mysql, bitnami/mongodb
-#                                stable/prometheus, stable/grafana, stable/traefik, stable/wordpress
-#     [stable/wordpress,stable/grafana] --> [stable/traefik] --> [bitnami/redis, stable/mysql, bitnami/postgresql] --> [stable/prometheus]
-
+# Sample manifest with 2 charts: bitnami/redis, stable/mysql
 metadata:
   name: install-manifest-2
   kind: manifest
@@ -9,17 +6,17 @@ charts:
   - name: "redis"
     chartName: "bitnami/redis"
     namespace: "paas"
-    chartLocator: "{{.ChartLocation}}/redis-10.7.9.tgz"
+    chartLocator: "bitnami/redis"
     releaseName: "test-redis"
     values:
-      - url: "{{.ChartLocation}}/redis/values.yaml"
+      - url: "values/values-redis.yaml"
   - name: "mysql"
     chartName: "stable/mysql"
     namespace: "paas"
     chartLocator: "stable/mysql"
     releaseName: "test-mysql"
     values:
-      - url: "{{.ChartLocation}}/mysql/values.yaml"
+      - url: "values/values-mysql.yaml"
 dependencies:
   - name: "mysql"
     requires:

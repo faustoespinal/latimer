@@ -175,13 +175,15 @@ func (m *Manifest) Status(sc *core.SystemContext) kube.InstallStatus {
 func (m *Manifest) waitForDependencies(sc *core.SystemContext, itemID string) error {
 	depItems, found := m.dependencies[itemID]
 	if found {
-		// Default 5 minutes
-		timeout := 300 * time.Second
 		for _, item := range depItems {
+			// Default 5 minutes
+			timeout := 300 * time.Second
+
 			var installable core.Installable = nil
 			chart, foundChart := m.charts[item.Name]
 			if foundChart {
 				installable = chart
+				timeout = time.Duration(chart.Descriptor.Timeout) * time.Second
 			} else {
 				pkg, foundPkg := m.charts[item.Name]
 				if foundPkg {
