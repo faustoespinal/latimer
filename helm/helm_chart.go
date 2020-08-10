@@ -2,6 +2,7 @@ package helm
 
 import (
 	"encoding/json"
+	"fmt"
 	"latimer/core"
 	"latimer/kube"
 
@@ -79,6 +80,10 @@ func (hc *Chart) Install(sc *core.SystemContext) bool {
 	} else if err != nil {
 		logrus.Errorf("Install failed [%v]", err)
 		status = false
+	} else {
+		fmt.Printf("%v", releaseInfo.Info.Notes)
+		fmt.Printf("Helm chart %v installed to namespace %v\n", releaseName, releaseNamespace)
+		fmt.Println("----------------------------------------------------------------------------------------")
 	}
 	return status
 }
@@ -98,6 +103,8 @@ func (hc *Chart) Uninstall(sc *core.SystemContext) bool {
 		if err != nil {
 			logrus.Errorf("Delete failed [%v]", err.Error())
 			status = false
+		} else {
+			fmt.Printf("Helm chart %v deleted from namespace %v\n", releaseName, releaseNamespace)
 		}
 	}
 	return status

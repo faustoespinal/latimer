@@ -115,18 +115,17 @@ func (m *Manifest) Install(sc *core.SystemContext) bool {
 			}
 			c := hc.Descriptor
 			releaseName := c.ReleaseName
-			fmt.Printf("    Installing chart: %v", hc.Name)
+			fmt.Printf("Installing chart: %v\n", hc.Name)
 			hc.Install(&sysCtxt)
 			logrus.Infof("Installed HELM chart %v", releaseName)
 		case core.PackageType:
 			p := m.packages[installItem.Name]
-			fmt.Printf("    Installing package: %v", p.Name)
+			fmt.Printf("Installing package: %v\n", p.Name)
 			p.Install(&sysCtxt)
-			logrus.Infof("Installed Package %v", p.Name)
+			fmt.Printf("Installed Package %v\n", p.Name)
 		case core.ManifestType:
-			logrus.Infof("Installed manifest %v", installItem.Name)
+			fmt.Printf("Installed manifest: %v\n", installItem.Name)
 		}
-		logrus.Info("===============================================================")
 	}
 	return true
 }
@@ -154,7 +153,6 @@ func (m *Manifest) Uninstall(sc *core.SystemContext) bool {
 		case core.ManifestType:
 			logrus.Infof("Uninstalled manifest %v", installItem.Name)
 		}
-		logrus.Infof("===============================================================")
 	}
 	return true
 }
@@ -191,7 +189,7 @@ func (m *Manifest) waitForDependencies(sc *core.SystemContext, itemID string) er
 				}
 			}
 			if installable != nil {
-				fmt.Printf("    %v waiting for dependency %v to complete install", itemID, installable.GetID())
+				fmt.Printf("@@@@@@@ %v waiting for dependency %v to complete install\n", itemID, installable.GetID())
 				start := time.Now()
 				for installable.Status(sc) != kube.Ready {
 					time.Sleep(2 * time.Second)
